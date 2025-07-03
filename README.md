@@ -1,46 +1,36 @@
-# Empty CMS template
+## Content Graph Example
 
-## How to run
+This project uses an embedded SQL database and should be generally ready to run using Visual Studio on Windows.
 
-Chose one of the following options to get started. 
+**Before running, add Content Graph connection details to `appsettings.Development.json`**
 
-### Windows
 
-Prerequisities
-- .NET SDK 8+
-- SQL Server 2016 Express LocalDB (or later)
+Steps:
 
-```bash
-$ dotnet run
-````
-
-### Any OS with Docker
-
-Prerequisities
-- Docker
-- Enable Docker support when applying the template
-- Review the .env file and make changes where necessary to the Docker-related variables
-
-```bash
-$ docker-compose up
-````
-
-> Note that this Docker setup is just configured for local development. Follow this [guide to enable HTTPS](https://github.com/dotnet/dotnet-docker/blob/main/samples/run-aspnetcore-https-development.md).
-
-#### Reclaiming Docker Image Space
-
-1. Backup the App_Data/\${DB_NAME}.mdf and App_Data/\${DB_NAME}.ldf DB restoration files for safety
-2. Run `docker compose down --rmi all` to remove containers, networks, and images associated with the specific project instance
-3. In the future, run `docker compose up` anytime you want to recreate the images and containers
-
-### Any OS with external database server
-
-Prerequisities
-- .NET SDK 8+
-- SQL Server 2016 (or later) on a external server, e.g. Azure SQL
-
-Create an empty database on the external database server and update the connection string accordingly.
-
-```bash
-$ dotnet run
-````
+1. Run the project and log into the [backend ](https://localhost:5000/episerver/CMS) with the credentials `admin` / `Admin1!!`
+2. Ensure that the `Optimizely Graph content synchronization job` has run to sync CMS content to the `default` content source.
+3. Run the `External Trip Dates Data Sync` scheduled job to sync additional trip data to the `src1` content source.
+4. Manually create links between the CMS TripPage `TripCode` poperty and the `src1` ExternalTripDates `ExternalTripCode` field with the `https://prod.cg.optimizely.com/api/content/v3/sources?id=default` endpoint
+5. Run the following GraphQL query:
+   ````GraphQL
+   query PageQuery {
+     TripPage {
+       total
+       items {
+         TripCode
+         Name
+         _link(type: TRIPDATES) {
+           ExternalTripDates {
+             items {
+               ExternalTripCode
+               ExternalSpaceAvailable
+               ExternalSingleAvailability
+               ExternalReturnDate
+               ExternalDepartureDate
+             }
+           }
+         }
+       }
+     }
+   }
+   ````
